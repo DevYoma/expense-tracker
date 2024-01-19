@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 // @ts-ignore
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/database.types"; 
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const router = useRouter();
   const [user ,setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -27,25 +28,43 @@ export default function Login() {
   }, [])
 
   const handleSignUp = async () => {
-    const res = await supabase.auth.signUp({
+    const {data, error} = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${location.origin}/auth/callback`,
+        data: {
+          // data you want to add to the user table on register 
+          name,
+        }
       },
     });
-    setUser(res.data.user)
+    
+    if(error){
+      console.log(error)
+      alert(error.message)
+      return
+    }
+
+    setUser(data.user)
     router.refresh();
     setEmail('')
     setPassword('')
   };
 
   const handleSignIn = async () => {
-    const res = await supabase.auth.signInWithPassword({
+    const {data, error} = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    setUser(res.data.user)
+
+    if(error){
+      console.log(error);
+      alert(error.message);
+      return;
+    }
+
+    setUser(data.user)
     router.refresh();
     setEmail('')
     setPassword('')
@@ -57,7 +76,7 @@ export default function Login() {
     setUser(null)
   };
 
-  console.log(loading, user) 
+  // console.log(loading, user) 
 
   if(loading){
     return <h1>loading...</h1>
@@ -81,6 +100,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center flex-col">
+      <input
+        name="name"
+        onChange={(e) => setName(e.target.value)}
+        value={name}
+        className="border rounded p-2 mb-2 block text-black "
+        placeholder="Name"
+      />
       <input
         name="email"
         onChange={(e) => setEmail(e.target.value)}
@@ -108,7 +134,6 @@ export default function Login() {
       >
         Sign in
       </button>
-    
     </div>
   );
 }
